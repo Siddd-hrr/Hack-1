@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: printEaseDb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - '6379:6379'
+
+  zookeeper:
+    image: wurstmeister/zookeeper:3.4.6
+    restart: always
+    ports:
+      - '2181:2181'
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    restart: always
+    environment:
+      KAFKA_ZOOKEEPER: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092'
+    ports:
+      - '9092:9092'
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    environment:
+      MINIO_ACCESS_KEY: minio_access_key
+      MINIO_SECRET_KEY: minio_secret_key
+    ports:
+      - '9000:9000'
+    command: server /data
+
+volumes:
+  postgres_data:
+    driver: local
