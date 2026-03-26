@@ -1,0 +1,15 @@
+# Ignore Maven target directory
+/target/
+
+# Ignore IDE files
+*.iml
+*.idea/
+
+# Ignore Node.js dependencies
+/node_modules/
+
+# Ignore build artifacts
+/build/
+
+# Ignore environment files
+.env
