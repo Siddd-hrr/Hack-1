@@ -5,6 +5,7 @@ import com.qprint.objects.model.ApiResponse;
 import com.qprint.objects.service.ObjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +26,7 @@ public class ObjectsController {
     private final ObjectService objectService;
 
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
+    @PreAuthorize("hasAuthority('SCOPE_objects:write')")
     public ResponseEntity<ApiResponse<PrintObjectResponse>> upload(
             @RequestHeader("X-User-Id") String userId,
             @RequestPart("file") MultipartFile file,
@@ -35,6 +37,7 @@ public class ObjectsController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_objects:read')")
     public ResponseEntity<ApiResponse<PrintObjectResponse>> getOne(
             @PathVariable("id") UUID id,
             @RequestHeader("X-User-Id") String userId
@@ -44,6 +47,7 @@ public class ObjectsController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_objects:write')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable("id") UUID id,
             @RequestHeader("X-User-Id") String userId

@@ -3,6 +3,7 @@ package com.qprint.shops.controller;
 import com.qprint.shops.dto.ShopDto;
 import com.qprint.shops.model.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ import java.util.List;
 public class ShopsController {
 
     @GetMapping("/nearby")
+        @PreAuthorize("hasAuthority('SCOPE_shops:read')")
     public ResponseEntity<ApiResponse<List<ShopDto>>> nearby(
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng

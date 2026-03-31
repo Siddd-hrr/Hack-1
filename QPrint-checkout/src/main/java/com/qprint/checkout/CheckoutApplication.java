@@ -1,5 +1,6 @@
 package com.qprint.checkout;
 
+import com.qprint.checkout.security.AuthTokenRelayInterceptor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +13,9 @@ public class CheckoutApplication {
     }
 
     @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    public RestTemplate restTemplate(AuthTokenRelayInterceptor authTokenRelayInterceptor) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getInterceptors().add(authTokenRelayInterceptor);
+        return restTemplate;
     }
 }

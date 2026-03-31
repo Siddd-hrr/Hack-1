@@ -18,6 +18,10 @@ spring:
     consumer:
       group-id: QPrint-transactions
       auto-offset-reset: earliest
+jwt:
+  secret: ${JWT_SECRET:change-me-please-change-me-please-change-me}
+  issuer: ${JWT_ISSUER:qprint-auth}
+  audience: ${JWT_AUDIENCE:qprint-api}
 management:
   endpoints:
     web:

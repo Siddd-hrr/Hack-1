@@ -20,10 +20,14 @@ MinIO: file storage
 - Node 18+
 
 ## Quick start (Docker)
-1. Copy `.env.example` to `.env` and fill secrets.
-2. From repo root:
-     - `docker compose up --build`
-3. Services listen on 8080-8088; Postgres on 5432; Redis on 6379; Kafka on 9092; MinIO on 9000/9001.
+1. Copy `deploy/.env.dev.example` to `.env.dev` and fill secrets.
+2. Ensure `.env.dev` uses a JWT secret that is unique to dev.
+3. Validate secret separation before startup:
+    - `./scripts/validate-jwt-secrets.ps1 -DevEnvPath .env.dev -StagingEnvPath deploy/.env.staging -ProdEnvPath deploy/.env.prod`
+4. From repo root:
+    - `docker compose --env-file .env.dev up --build`
+5. Gateway is exposed on 8080; backend microservices are internal-only on the Docker network.
+6. Infra containers (Postgres/Redis/Kafka/MinIO) are also internal-only by default in local compose.
 
 ## Frontend dev
 ```
@@ -34,14 +38,45 @@ npm run dev
 
 ## Module ports (default)
 - Gateway: 8080
-- Auth: 8081
-- Objects: 8082
-- Cart: 8083
-- Checkout: 8084
-- Orders: 8085
-- OTP: 8086
-- Transactions: 8087
-- Shops: 8088
+- Auth: 8081 (internal container port)
+- Objects: 8082 (internal container port)
+- Cart: 8083 (internal container port)
+- Checkout: 8084 (internal container port)
+- Orders: 8085 (internal container port)
+- OTP: 8086 (internal container port)
+- Transactions: 8087 (internal container port)
+- Shops: 8088 (internal container port)
+
+## Backend security
+
+### Security model
+- Access tokens are JWTs signed by auth service and validated by gateway plus every backend microservice.
+- JWT validation checks signature, expiration, issuer, and audience in each service.
+- Role and scope claims are converted to Spring Security authorities (`ROLE_*`, `SCOPE_*`).
+- Service-to-service HTTP calls relay user JWT when available.
+- If a backend automation flow has no user token (for example webhook/event handling), services mint short-lived service JWTs with `role=SERVICE` and scoped permissions.
+- Backend containers are not host-exposed in Docker Compose, so traffic must pass through gateway unless you intentionally re-open ports.
+
+### Backend security column
+| Service | Main routes | Security column (how it works) |
+| --- | --- | --- |
+| Gateway | `/auth/**`, `/api/**` | Validates JWT at edge with signature + `exp` + `iss` + `aud`; routes protected APIs through `JwtAuth` filter. |
+| Auth | `/auth/**` | Issues JWT with role + scopes; validates JWT with issuer/audience on protected auth endpoints. |
+| Objects | `/api/objects/**` | Re-validates JWT per request; enforces `objects:read`/`objects:write` scopes via method authorization. |
+| Cart | `/api/cart/**` | Re-validates JWT per request; enforces `cart:read`/`cart:write` scopes via method authorization. |
+| Checkout | `/api/checkout/**` | Re-validates JWT on user routes; enforces `checkout:read`/`checkout:write`; webhook path remains public by design. |
+| Orders | `/api/orders/**`, `/internal/orders/**` | Re-validates JWT per request; `orders:read`/`orders:write` for user flows; `orders:manage` or service role for privileged status updates. |
+| OTP | `/internal/otp/**` | Requires service-level JWT authority (`otp:write` or `ROLE_SERVICE`) for generate/verify endpoints. |
+| Transactions | `/api/transactions/**` | Re-validates JWT per request; enforces `transactions:read` scope. |
+| Shops | `/api/shops/**` | Re-validates JWT per request; enforces `shops:read` scope. |
+
+### JWT claims used by backend
+- `sub`: user UUID for user tokens, `service:<service-name>` for service tokens
+- `role`: e.g. `STUDENT`, `SERVICE`
+- `scopes`: fine-grained permissions (`cart:read`, `orders:manage`, etc.)
+- `iss`: token issuer (`qprint-auth` by default)
+- `aud`: token audience (`qprint-api` by default)
+- `exp`: token expiry
 
 ## Environment variables
 ```
@@ -64,6 +99,20 @@ SMTP_USERNAME=...
 SMTP_PASSWORD=...
 SMTP_FROM=noreply@qprint.app
 ```
+
+## Environment-separated JWT secrets
+- Use separate env files and never reuse `JWT_SECRET` across environments:
+    - Dev: `.env.dev` (create from `deploy/.env.dev.example`)
+    - Staging: `deploy/.env.staging` (create from `deploy/.env.staging.example`)
+    - Prod: `deploy/.env.prod` (create from `deploy/.env.prod.example`)
+- Start environments with explicit env files:
+    - Dev: `docker compose --env-file .env.dev up --build`
+    - Staging/Prod: `docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.staging up -d` or `--env-file deploy/.env.prod`
+- Exposure controls in `deploy/docker-compose.prod.yml`:
+    - `GATEWAY_BIND_HOST=0.0.0.0` keeps gateway publicly reachable.
+    - `FRONTEND_BIND_HOST=127.0.0.1` keeps frontend local-only by default (change only if intentionally public).
+- Validate secret separation before deploy:
+    - `./scripts/validate-jwt-secrets.ps1 -DevEnvPath .env.dev -StagingEnvPath deploy/.env.staging -ProdEnvPath deploy/.env.prod`
 
 ## API summary
 
@@ -171,6 +220,15 @@ git push -u origin main
 - `GHCR_USERNAME`: GitHub username/org with package pull access
 - `GHCR_TOKEN`: GitHub PAT with `read:packages`
 - `DEPLOY_ENV_FILE`: full contents of your production `.env` (use `deploy/.env.prod.example` as base)
+
+### 2.1) GHCR and CI secret rotation policy
+- Rotate `GHCR_TOKEN` every 60 to 90 days, or immediately after any exposure.
+- Use a fine-grained PAT with minimum scope (`read:packages` for deploy pull-only use).
+- Never store GHCR token values in files inside this repo.
+- Store deployment secrets only in GitHub Actions Secrets (or your cloud secret manager).
+- Rotate `DEPLOY_SSH_KEY` if deploy machine access changed or team members changed.
+- Update `DEPLOY_ENV_FILE` in GitHub Secrets after rotating app secrets (JWT, DB, SMTP, MinIO).
+- Verify repository hygiene in CI: tracked real env files are blocked by `.github/workflows/ci.yml`.
 
 ### 3) Publish images
 - Push to `main` (or run `Publish Docker Images` workflow manually).

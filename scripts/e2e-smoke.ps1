@@ -36,15 +36,7 @@ function Parse-JsonContent {
 $results = New-Object System.Collections.Generic.List[object]
 
 $healthTargets = @(
-    @{ name = 'gateway'; url = 'http://localhost:8080/actuator/health' },
-    @{ name = 'auth'; url = 'http://localhost:8081/actuator/health' },
-    @{ name = 'objects'; url = 'http://localhost:8082/actuator/health' },
-    @{ name = 'cart'; url = 'http://localhost:8083/actuator/health' },
-    @{ name = 'checkout'; url = 'http://localhost:8084/actuator/health' },
-    @{ name = 'orders'; url = 'http://localhost:8085/actuator/health' },
-    @{ name = 'otp'; url = 'http://localhost:8086/actuator/health' },
-    @{ name = 'transactions'; url = 'http://localhost:8087/actuator/health' },
-    @{ name = 'shops'; url = 'http://localhost:8088/actuator/health' }
+    @{ name = 'gateway'; url = 'http://localhost:8080/actuator/health' }
 )
 
 foreach ($h in $healthTargets) {
@@ -63,6 +55,37 @@ foreach ($h in $healthTargets) {
                 status = 'ERR'
                 pass   = $false
                 detail = $_.Exception.Message
+            })
+    }
+}
+
+$blockedPorts = @(
+    @{ name = 'auth'; url = 'http://localhost:8081/actuator/health' },
+    @{ name = 'objects'; url = 'http://localhost:8082/actuator/health' },
+    @{ name = 'cart'; url = 'http://localhost:8083/actuator/health' },
+    @{ name = 'checkout'; url = 'http://localhost:8084/actuator/health' },
+    @{ name = 'orders'; url = 'http://localhost:8085/actuator/health' },
+    @{ name = 'otp'; url = 'http://localhost:8086/actuator/health' },
+    @{ name = 'transactions'; url = 'http://localhost:8087/actuator/health' },
+    @{ name = 'shops'; url = 'http://localhost:8088/actuator/health' }
+)
+
+foreach ($p in $blockedPorts) {
+    try {
+        $r = Invoke-WebRequest -Method GET -Uri $p.url -TimeoutSec 10 -UseBasicParsing
+        $results.Add([pscustomobject]@{
+                test   = "direct_port_blocked:$($p.name)"
+                status = $r.StatusCode
+                pass   = $false
+                detail = 'Unexpectedly reachable from host'
+            })
+    }
+    catch {
+        $results.Add([pscustomobject]@{
+                test   = "direct_port_blocked:$($p.name)"
+                status = 'BLOCKED'
+                pass   = $true
+                detail = 'Blocked as expected (gateway-only exposure)'
             })
     }
 }
@@ -214,6 +237,7 @@ if ($token) {
         @{ name = 'auth_me'; method = 'GET'; url = "$base/auth/me"; body = $null },
         @{ name = 'cart_get'; method = 'GET'; url = "$base/api/cart"; body = $null },
         @{ name = 'cart_count'; method = 'GET'; url = "$base/api/cart/count"; body = $null },
+        @{ name = 'objects_get_random'; method = 'GET'; url = "$base/api/objects/00000000-0000-0000-0000-000000000000"; body = $null },
         @{ name = 'orders_list'; method = 'GET'; url = "$base/api/orders"; body = $null },
         @{ name = 'orders_active'; method = 'GET'; url = "$base/api/orders/active"; body = $null },
         @{ name = 'transactions_list'; method = 'GET'; url = "$base/api/transactions"; body = $null },

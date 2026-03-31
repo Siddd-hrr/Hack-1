@@ -14,9 +14,15 @@ import org.springframework.stereotype.Component;
 public class JwtValidator {
 
     private final Key key;
+    private final String expectedIssuer;
+    private final String expectedAudience;
 
-    public JwtValidator(@Value("${jwt.secret}") String secret) {
+    public JwtValidator(@Value("${jwt.secret}") String secret,
+                        @Value("${jwt.issuer}") String expectedIssuer,
+                        @Value("${jwt.audience}") String expectedAudience) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expectedIssuer = expectedIssuer;
+        this.expectedAudience = expectedAudience;
     }
 
     public Claims validate(String token) {
@@ -27,6 +33,12 @@ public class JwtValidator {
         Claims claims = claimsJws.getBody();
         if (claims.getExpiration().before(new Date())) {
             throw new IllegalArgumentException("Token expired");
+        }
+        if (!expectedIssuer.equals(claims.getIssuer())) {
+            throw new IllegalArgumentException("Invalid token issuer");
+        }
+        if (!expectedAudience.equals(claims.getAudience())) {
+            throw new IllegalArgumentException("Invalid token audience");
         }
         return claims;
     }

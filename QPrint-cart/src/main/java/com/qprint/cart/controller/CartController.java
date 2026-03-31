@@ -6,6 +6,7 @@ import com.qprint.cart.model.ApiResponse;
 import com.qprint.cart.service.CartService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,18 +20,21 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_cart:read')")
     public ResponseEntity<ApiResponse<CartSummaryDto>> getCart(@RequestHeader("X-User-Id") String userIdHeader) {
         CartSummaryDto summary = cartService.getCart(parse(userIdHeader));
         return ResponseEntity.ok(ApiResponse.ok(summary, "Cart fetched"));
     }
 
     @GetMapping("/count")
+    @PreAuthorize("hasAuthority('SCOPE_cart:read')")
     public ResponseEntity<ApiResponse<Integer>> count(@RequestHeader("X-User-Id") String userIdHeader) {
         int count = cartService.count(parse(userIdHeader));
         return ResponseEntity.ok(ApiResponse.ok(count, "Count fetched"));
     }
 
     @PostMapping("/add")
+    @PreAuthorize("hasAuthority('SCOPE_cart:write')")
     public ResponseEntity<ApiResponse<CartSummaryDto>> add(
             @RequestHeader("X-User-Id") String userIdHeader,
             @Valid @RequestBody AddItemRequest request
@@ -40,6 +44,7 @@ public class CartController {
     }
 
     @DeleteMapping("/item/{objectId}")
+    @PreAuthorize("hasAuthority('SCOPE_cart:write')")
     public ResponseEntity<ApiResponse<CartSummaryDto>> delete(
             @RequestHeader("X-User-Id") String userIdHeader,
             @PathVariable UUID objectId
@@ -49,6 +54,7 @@ public class CartController {
     }
 
     @DeleteMapping
+    @PreAuthorize("hasAuthority('SCOPE_cart:write')")
     public ResponseEntity<ApiResponse<Void>> clear(@RequestHeader("X-User-Id") String userIdHeader) {
         cartService.clear(parse(userIdHeader));
         return ResponseEntity.ok(ApiResponse.ok(null, "Cart cleared"));
