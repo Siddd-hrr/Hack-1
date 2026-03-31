@@ -8,6 +8,7 @@ import com.qprint.orders.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +29,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('SCOPE_orders:write')")
     public ResponseEntity<ApiResponse<OrderResponse>> create(
             @RequestHeader("X-User-Id") String userIdHeader,
             @Valid @RequestBody CreateOrderRequest request
@@ -37,18 +39,21 @@ public class OrderController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_orders:read')")
     public ResponseEntity<ApiResponse<List<OrderResponse>>> list(@RequestHeader("X-User-Id") String userIdHeader) {
         List<OrderResponse> orders = orderService.list(parse(userIdHeader));
         return ResponseEntity.ok(ApiResponse.ok(orders, "Orders fetched"));
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasAuthority('SCOPE_orders:read')")
     public ResponseEntity<ApiResponse<List<OrderResponse>>> listActive(@RequestHeader("X-User-Id") String userIdHeader) {
         List<OrderResponse> orders = orderService.listActive(parse(userIdHeader));
         return ResponseEntity.ok(ApiResponse.ok(orders, "Active orders fetched"));
     }
 
     @GetMapping("/{orderId}")
+    @PreAuthorize("hasAuthority('SCOPE_orders:read')")
     public ResponseEntity<ApiResponse<OrderResponse>> get(
             @RequestHeader("X-User-Id") String userIdHeader,
             @PathVariable UUID orderId
@@ -58,6 +63,7 @@ public class OrderController {
     }
 
     @GetMapping("/active/{orderId}")
+    @PreAuthorize("hasAuthority('SCOPE_orders:read')")
     public ResponseEntity<ApiResponse<OrderResponse>> getActive(
             @RequestHeader("X-User-Id") String userIdHeader,
             @PathVariable UUID orderId
@@ -67,6 +73,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{orderId}/status")
+    @PreAuthorize("hasAnyAuthority('SCOPE_orders:manage', 'ROLE_SHOP', 'ROLE_SERVICE')")
     public ResponseEntity<ApiResponse<OrderResponse>> updateStatus(
             @PathVariable UUID orderId,
             @Valid @RequestBody UpdateOrderStatusRequest request

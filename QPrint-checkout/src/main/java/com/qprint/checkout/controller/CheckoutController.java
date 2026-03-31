@@ -6,6 +6,7 @@ import com.qprint.checkout.model.ApiResponse;
 import com.qprint.checkout.service.CheckoutService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,6 +25,7 @@ public class CheckoutController {
     private final CheckoutService checkoutService;
 
     @PostMapping("/initiate")
+        @PreAuthorize("hasAuthority('SCOPE_checkout:write')")
     public ResponseEntity<ApiResponse<InitiateCheckoutResponse>> initiate(
             @RequestHeader("X-User-Id") String userIdHeader
     ) {
@@ -32,6 +34,7 @@ public class CheckoutController {
     }
 
     @GetMapping("/{checkoutId}")
+    @PreAuthorize("hasAuthority('SCOPE_checkout:read')")
     public ResponseEntity<ApiResponse<CheckoutSummaryDto>> status(
             @RequestHeader("X-User-Id") String userIdHeader,
             @PathVariable UUID checkoutId
@@ -41,6 +44,7 @@ public class CheckoutController {
     }
 
     @GetMapping("/status/{razorpayOrderId}")
+    @PreAuthorize("hasAuthority('SCOPE_checkout:read')")
     public ResponseEntity<ApiResponse<CheckoutSummaryDto>> statusByRazorpay(
             @RequestHeader("X-User-Id") String userIdHeader,
             @PathVariable String razorpayOrderId

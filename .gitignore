@@ -7,9 +7,17 @@ Thumbs.db
 
 # Secrets and local env files
 .env
+.env.*
 .env.local
 .env.production
 .env.deploy
+.env.dev
+.env.staging
+.env.prod
+deploy/.env
+deploy/.env.*
+deploy/.env.staging
+deploy/.env.prod
 *.pem
 *.key
 
@@ -33,3 +41,6 @@ tmp-test.png
 
 # Keep checked-in templates
 !.env.example
+!deploy/.env.dev.example
+!deploy/.env.staging.example
+!deploy/.env.prod.example

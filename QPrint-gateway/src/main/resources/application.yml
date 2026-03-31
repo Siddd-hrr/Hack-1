@@ -97,5 +97,7 @@ management:
         include: health,info
 jwt:
   secret: ${JWT_SECRET:change-me-please-change-me-please-change-me}
+  issuer: ${JWT_ISSUER:qprint-auth}
+  audience: ${JWT_AUDIENCE:qprint-api}
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}

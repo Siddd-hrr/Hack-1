@@ -18,6 +18,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,6 +38,19 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
+
+    private static final List<String> STUDENT_SCOPES = List.of(
+            "objects:read",
+            "objects:write",
+            "cart:read",
+            "cart:write",
+            "checkout:read",
+            "checkout:write",
+            "orders:read",
+            "orders:write",
+            "transactions:read",
+            "shops:read"
+    );
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -153,7 +167,8 @@ public class AuthService {
                 "email", user.getEmail(),
                 "firstName", user.getFirstName(),
                 "lastName", user.getLastName(),
-                "role", "STUDENT"
+                "role", "STUDENT",
+                "scopes", STUDENT_SCOPES
         );
         return jwtService.generateAccessToken(claims);
     }

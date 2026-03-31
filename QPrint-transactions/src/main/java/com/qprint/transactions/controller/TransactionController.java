@@ -6,6 +6,7 @@ import com.qprint.transactions.model.ApiResponse;
 import com.qprint.transactions.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -23,6 +24,7 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_transactions:read')")
     public ResponseEntity<ApiResponse<PageResponse<TransactionResponse>>> list(
             @RequestHeader("X-User-Id") String userIdHeader,
             @RequestParam(defaultValue = "0") int page,
@@ -33,6 +35,7 @@ public class TransactionController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_transactions:read')")
     public ResponseEntity<ApiResponse<TransactionResponse>> get(
             @RequestHeader("X-User-Id") String userIdHeader,
             @PathVariable UUID id

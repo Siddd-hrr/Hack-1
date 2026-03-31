@@ -18,11 +18,17 @@ public class JwtService {
 
     private final Key signingKey;
     private final int accessTokenExpirationMinutes;
+    private final String issuer;
+    private final String audience;
 
     public JwtService(@Value("${jwt.secret}") String secret,
-                      @Value("${jwt.access-token-expiration-minutes}") int accessTokenExpirationMinutes) {
+                      @Value("${jwt.access-token-expiration-minutes}") int accessTokenExpirationMinutes,
+                      @Value("${jwt.issuer}") String issuer,
+                      @Value("${jwt.audience}") String audience) {
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes());
         this.accessTokenExpirationMinutes = accessTokenExpirationMinutes;
+        this.issuer = issuer;
+        this.audience = audience;
     }
 
     public String generateAccessToken(Map<String, Object> claims) {
@@ -30,6 +36,8 @@ public class JwtService {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject((String) claims.get("sub"))
+                .setIssuer(issuer)
+                .setAudience(audience)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(now.plus(accessTokenExpirationMinutes, ChronoUnit.MINUTES)))
                 .signWith(signingKey, SignatureAlgorithm.HS256)
@@ -37,7 +45,13 @@ public class JwtService {
     }
 
     public Claims parseToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder()
+                .setSigningKey(signingKey)
+                .requireIssuer(issuer)
+                .requireAudience(audience)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
     public boolean isExpired(Claims claims) {

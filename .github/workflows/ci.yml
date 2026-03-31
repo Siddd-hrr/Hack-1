@@ -6,8 +6,30 @@ on:
   pull_request:
 
 jobs:
+  repo-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure real env files are not tracked
+        run: |
+          set -euo pipefail
+          tracked_env=$(git ls-files | grep -E '^(\.env($|\.)|deploy/\.env($|\.(dev|staging|prod)))' || true)
+          allowed='^\.env\.example$|^deploy/\.env\.(dev|staging|prod)\.example$'
+
+          if [ -n "$tracked_env" ]; then
+            blocked=$(printf "%s\n" "$tracked_env" | grep -Ev "$allowed" || true)
+            if [ -n "$blocked" ]; then
+              echo "Forbidden env files are tracked:"
+              echo "$blocked"
+              exit 1
+            fi
+          fi
+
   backend-build:
     runs-on: ubuntu-latest
+    needs: repo-hygiene
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,6 +49,7 @@ jobs:
 
   frontend-build:
     runs-on: ubuntu-latest
+    needs: repo-hygiene
     defaults:
       run:
         working-directory: QPrint-frontend
