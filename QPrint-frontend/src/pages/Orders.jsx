@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import api from '../api/axios';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
+import Header from '../components/Header';
 import { getErrorMessage } from '../utils/api';
 
 const statusTone = {
@@ -72,9 +73,11 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-white px-4 py-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-background text-white flex flex-col">
+      <Header />
+      <div className="flex-1 px-4 py-6">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-400">Orders</p>
             <h1 className="text-2xl font-semibold">Your print orders</h1>
@@ -115,6 +118,7 @@ export default function OrdersPage() {
           ))}
         </div>
       </div>
+    </div>
     </div>
   );
 }
