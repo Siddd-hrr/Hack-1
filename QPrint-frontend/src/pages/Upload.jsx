@@ -14,6 +14,7 @@ import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 import Button from '../components/ui/Button';
+import Header from '../components/Header';
 import api from '../api/axios';
 import { useCartStore } from '../store/cartStore';
 
@@ -128,10 +129,12 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-white px-4 py-8">
-      <div className="auth-bg" />
-      <div className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[1.1fr_0.9fr] relative z-10">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <div className="min-h-screen bg-background text-white flex flex-col">
+      <Header />
+      <div className="flex-1 px-4 py-8">
+        <div className="auth-bg" />
+        <div className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[1.1fr_0.9fr] relative z-10">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           <div className="glass-card p-6 border border-white/10">
             <div className="flex items-center gap-3">
               <UploadCloud className="text-primary" />
@@ -298,6 +301,7 @@ export default function UploadPage() {
           </div>
         </motion.div>
       </div>
+    </div>
     </div>
   );
 }
